@@ -1,0 +1,66 @@
+
+
+ ** \brief Calculate PLL output frequency from settings
+#define __PLLCLK       ((__CLKMO  * __PLLN) / __PLLK)
+						 4MHz      x 36     / 1 = 144MHz
+
+
+/* Determine core clock frequency according to settings                       */
+#define __MASTERCLK     (__PLLCLK)			144MHz
+
+
+
+ ** \brief Define System Clock Frequency (Core Clock) from settings
+
+#if   ((BSC_PSR_Val & 0x07) == 0)
+  #define __HCLK         (__MASTERCLK / 1)	144MHz
+
+
+ ** \brief APB0 Prescaler Register value definition
+#define APBC0_PSR_Val         0x00000002     // <<< Define APBC0_PSR here
+ ** - 2 = PCLK0 = HCLK / 4				36MHz
+
+
+
+ ** \brief APB1 Prescaler Register value definition
+ ** Bit#7 : APBC1EN
+ ** - 0 = Disable PCLK1 output
+ ** - 1 = Enables PCLK1 (default)
+#define APBC1_PSR_Val         0x00000082    // <<< Define APBC1_PSR here
+
+
+
+ ** \brief APB2 Prescaler Register value definition
+ ** - 2 = PCLK2 = HCLK / 4
+#define APBC2_PSR_Val         0x00000082    // <<< Define APBC2_PSR here
+
+--------------------------------------------------------------
+[　] ・A/Dを初期化する.
+
+[　] ・A/Dをprintで動かす.
+
+[　] ・
+
+[　] ・
+--------------------------------------------------------------
+
+monitor/usercmd.c
+monitor/smpl_adc12.c
+monitor/Adc12Dev_FM3.c
+
+callback.c
+crt0.c
+debug.c
+main.c
+usbfunc_demoapp.c
+vector.c
+monitor/board.c
+monitor/fifo.c
+monitor/flash.c
+monitor/fm3_flash.c
+monitor/gpio.c
+monitor/monit.c
+monitor/picwrt.c
+monitor/picwrt2.c
+monitor/usbio.c
+monitor/usercmd.c

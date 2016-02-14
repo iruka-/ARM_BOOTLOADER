@@ -1,0 +1,6 @@
+copy $$ ..\..\..\mary\firmware\monitor
+copy $$ ..\..\..\lpc2388\firmware\monitor
+copy $$ ..\..\..\fm3\src\monitor
+copy $$ ..\..\..\rx62n\src\monitor
+copy $$ ..\..\..\sh2a\src\monitor
+

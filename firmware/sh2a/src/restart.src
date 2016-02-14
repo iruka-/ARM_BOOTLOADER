@@ -1,0 +1,7 @@
+			.EXPORT		_Restart
+			.SECTION	P,CODE,ALIGN=4
+_Restart:	MOV.L		@R5+,R0			; ジャンプ先アドレス取得
+			LDC			R4,VBR			; ユーザVBR設定
+			JMP			@R0				; ユーザプログラムにジャンプ
+			MOV.L		@R5,R15			; スタック取得
+			.END

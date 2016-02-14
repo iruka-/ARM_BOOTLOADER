@@ -1,0 +1,132 @@
+/****************************************************************
+KPIT Cummins Infosystems Ltd, Pune, India. - 01-Sept-2003.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+*****************************************************************/
+
+OUTPUT_ARCH(sh)
+ENTRY(_start)
+MEMORY
+{
+  ram  : o = 0x1C000000, l = 327680k
+  rom  : o = 0xA0000000, l = 4096k
+}
+
+SECTIONS
+{ 
+  .vects 0x1C000000:  
+  { 
+    _vects = .; 
+    *(.vects);
+	KEEP(*(.VECTTBL))	/* Exception vector table */
+	KEEP(*(.INTTBL))	/* Interrupt vector table */
+  } > ram
+
+.text 0x1C001000 : 
+{ 
+   CREATE_OBJECT_SYMBOLS 
+   *(.text) 
+   etext = .; 
+} > ram 
+
+.init :
+{
+  *(.init)
+} > ram
+
+.fini :
+{
+  *(.fini)
+} > ram
+
+.got :
+{
+  *(.got)
+  *(.got.plt)
+} > ram
+
+.rodata : 
+{
+    *(.rodata)
+    *(.rodata.*)
+    _erodata = .;
+} > ram
+
+.eh_frame_hdr :
+{ 
+    *(.eh_frame_hdr)
+}> ram
+
+.eh_frame : 
+{ 
+    *(.eh_frame)
+}> ram
+
+.jcr :
+{ 
+    *(.jcr)
+} > ram
+
+.tors : 
+{
+    __CTOR_LIST__ = .; 
+    LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2) 
+    ___ctors = . ; 
+    *(.ctors)
+    ___ctors_end = . ; 
+    LONG(0) 
+   __CTOR_END__ = .; 
+    __DTOR_LIST__ = .; 
+   LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2) 
+    ___dtors = . ; 
+   *(.dtors)
+    ___dtors_end = . ; 
+    LONG(0) 
+    __DTOR_END__ = .; 
+   _mdata = .; 
+} > ram
+
+.data :  { 
+   _data = .;
+   *(.data) 
+   *(.data.*)
+   _edata = .; 
+} > ram
+
+.gcc_exc :
+{
+    *(.gcc_exc)
+} > ram
+
+.bss :
+{
+    _bss = . ;
+    __bss_start__ = . ;
+    *(.bss)
+    *(COMMON)
+     _ebss = . ;
+     _end = . ;
+     __bss_end__ = . ;
+} > ram
+
+.stack 0x0DFFFFF0 :
+{
+   _stack = .;
+   *(.stack)
+} >ram 
+.stab . (NOLOAD) : 
+{ 
+   [ .stab ] 
+} 
+.stabstr . (NOLOAD) : 
+{ 
+   [ .stabstr ] 
+} 
+/DISCARD/ : 
+{
+*(.comment)
+}
+}

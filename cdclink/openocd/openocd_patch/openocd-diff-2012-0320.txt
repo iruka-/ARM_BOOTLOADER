@@ -1,0 +1,1418 @@
+diff -c -w -r openocd-orig/src/flash/nor/fm3.c openocd/src/flash/nor/fm3.c
+*** openocd-orig/src/flash/nor/fm3.c	Tue Mar 20 15:08:17 2012
+--- openocd/src/flash/nor/fm3.c	Tue Mar 20 16:27:03 2012
+***************
+*** 1,6 ****
+--- 1,7 ----
+  /***************************************************************************
+   *   Copyright (C) 2011 by Marc Willam, Holger Wech                        *
+   *   openOCD.fseu(AT)de.fujitsu.com                                        *
++  *                                                                         *
+   *   Copyright (C) 2011 Ronny Strutz                                       *
+   *                                                                         *
+   *   This program is free software; you can redistribute it and/or modify  *
+***************
+*** 28,58 ****
+  #include <target/algorithm.h>
+  #include <target/armv7m.h>
+  
+! #define FLASH_DQ6 0x00000040	/* Data toggle flag bit (TOGG) position */
+! #define FLASH_DQ5 0x00000020	/* Time limit exceeding flag bit (TLOV) position */
+  
+! enum fm3_variant {
+  	mb9bfxx1,	/* Flash Type '1' */
+  	mb9bfxx2,
+  	mb9bfxx3,
+  	mb9bfxx4,
+  	mb9bfxx5,
+  	mb9bfxx6,
+  	mb9afxx1,	/* Flash Type '2' */
+  	mb9afxx2,
+  	mb9afxx3,
+  	mb9afxx4,
+  	mb9afxx5,
+! 	mb9afxx6
+  };
+  
+! enum fm3_flash_type {
+  	fm3_no_flash_type = 0,
+  	fm3_flash_type1   = 1,
+  	fm3_flash_type2   = 2
+  };
+  
+! struct fm3_flash_bank {
+  	struct working_area *write_algorithm;
+  	enum fm3_variant variant;
+  	enum fm3_flash_type flashtype;
+--- 29,67 ----
+  #include <target/algorithm.h>
+  #include <target/armv7m.h>
+  
+! #define FLASH_DQ6 0x00000040	/* Data toggle flag bit (TOGG) */
+! #define FLASH_DQ5 0x00000020	/* Time limit exceeding flag bit (TLOV) */
+  
+! enum fm3_variant
+! {
+  	mb9bfxx1,	/* Flash Type '1' */
+  	mb9bfxx2,
+  	mb9bfxx3,
+  	mb9bfxx4,
+  	mb9bfxx5,
+  	mb9bfxx6,
++ 	mb9bfxx7,
++ 	mb9bfxx8,
++ 
+  	mb9afxx1,	/* Flash Type '2' */
+  	mb9afxx2,
+  	mb9afxx3,
+  	mb9afxx4,
+  	mb9afxx5,
+! 	mb9afxx6,
+! 	mb9afxx7,
+! 	mb9afxx8,
+  };
+  
+! enum fm3_flash_type
+! {
+  	fm3_no_flash_type = 0,
+  	fm3_flash_type1   = 1,
+  	fm3_flash_type2   = 2
+  };
+  
+! struct fm3_flash_bank
+! {
+  	struct working_area *write_algorithm;
+  	enum fm3_variant variant;
+  	enum fm3_flash_type flashtype;
+***************
+*** 64,115 ****
+  	struct fm3_flash_bank *fm3_info;
+  
+  	if (CMD_ARGC < 6)
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+  
+  	fm3_info = malloc(sizeof(struct fm3_flash_bank));
+  	bank->driver_priv = fm3_info;
+  
+  	/* Flash type '1' */
+! 	if (strcmp(CMD_ARGV[5], "mb9bfxx1.cpu") == 0) {
+  		fm3_info->variant = mb9bfxx1;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9bfxx2.cpu") == 0) {
+  		fm3_info->variant = mb9bfxx2;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9bfxx3.cpu") == 0) {
+  		fm3_info->variant = mb9bfxx3;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9bfxx4.cpu") == 0) {
+  		fm3_info->variant = mb9bfxx4;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9bfxx5.cpu") == 0) {
+  		fm3_info->variant = mb9bfxx5;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9bfxx6.cpu") == 0) {
+  		fm3_info->variant = mb9bfxx6;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9afxx1.cpu") == 0) {	/* Flash type '2' */
+  		fm3_info->variant = mb9afxx1;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9afxx2.cpu") == 0) {
+  		fm3_info->variant = mb9afxx2;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9afxx3.cpu") == 0) {
+  		fm3_info->variant = mb9afxx3;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9afxx4.cpu") == 0) {
+  		fm3_info->variant = mb9afxx4;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9afxx5.cpu") == 0) {
+  		fm3_info->variant = mb9afxx5;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	} else if (strcmp(CMD_ARGV[5], "mb9afxx6.cpu") == 0) {
+  		fm3_info->variant = mb9afxx6;
+  		fm3_info->flashtype = fm3_flash_type2;
+  	}
+  
+  	/* unknown Flash type */
+! 	else {
+  		LOG_ERROR("unknown fm3 variant: %s", CMD_ARGV[5]);
+  		free(fm3_info);
+  		return ERROR_FLASH_BANK_INVALID;
+--- 73,172 ----
+  	struct fm3_flash_bank *fm3_info;
+  
+  	if (CMD_ARGC < 6)
++ 	{
+  		return ERROR_COMMAND_SYNTAX_ERROR;
++ 	}
+  
+  	fm3_info = malloc(sizeof(struct fm3_flash_bank));
+  	bank->driver_priv = fm3_info;
+  
+  	/* Flash type '1' */
+! 	if (strcmp(CMD_ARGV[5], "mb9bfxx1.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9bfxx1;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9bfxx2.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9bfxx2;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9bfxx3.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9bfxx3;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9bfxx4.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9bfxx4;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9bfxx5.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9bfxx5;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9bfxx6.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9bfxx6;
+  		fm3_info->flashtype = fm3_flash_type1;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9bfxx7.cpu") == 0)
+! 	{
+! 		fm3_info->variant = mb9bfxx7;
+! 		fm3_info->flashtype = fm3_flash_type1;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9bfxx8.cpu") == 0)
+! 	{
+! 		fm3_info->variant = mb9bfxx8;
+! 		fm3_info->flashtype = fm3_flash_type1;
+! 	}
+! 
+! 	/* Flash type '2' */
+! 	else if (strcmp(CMD_ARGV[5], "mb9afxx1.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9afxx1;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9afxx2.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9afxx2;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9afxx3.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9afxx3;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9afxx4.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9afxx4;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9afxx5.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9afxx5;
+  		fm3_info->flashtype = fm3_flash_type2;
+! 	}
+! 	else if (strcmp(CMD_ARGV[5], "mb9afxx6.cpu") == 0)
+! 	{
+  		fm3_info->variant = mb9afxx6;
+  		fm3_info->flashtype = fm3_flash_type2;
+  	}
++ 	else if (strcmp(CMD_ARGV[5], "mb9afxx7.cpu") == 0)
++ 	{
++ 		fm3_info->variant = mb9afxx7;
++ 		fm3_info->flashtype = fm3_flash_type2;
++ 	}
++ 	else if (strcmp(CMD_ARGV[5], "mb9afxx8.cpu") == 0)
++ 	{
++ 		fm3_info->variant = mb9afxx8;
++ 		fm3_info->flashtype = fm3_flash_type2;
++ 	}
+  
+  	/* unknown Flash type */
+! 	else
+! 	{
+  		LOG_ERROR("unknown fm3 variant: %s", CMD_ARGV[5]);
+  		free(fm3_info);
+  		return ERROR_FLASH_BANK_INVALID;
+***************
+*** 129,135 ****
+  	int ms = 0;
+  
+  	/* While(1) loop exit via "break" and "return" on error */
+! 	while (1) {
+  		/* dummy-read - see flash manual */
+  		retval = target_read_u16(target, offset, &state1);
+  		if (retval != ERROR_OK)
+--- 186,193 ----
+  	int ms = 0;
+  
+  	/* While(1) loop exit via "break" and "return" on error */
+! 	while(1)
+! 	{
+  		/* dummy-read - see flash manual */
+  		retval = target_read_u16(target, offset, &state1);
+  		if (retval != ERROR_OK)
+***************
+*** 147,155 ****
+  
+  		/* Flash command finished via polled data equal? */
+  		if ((state1 & FLASH_DQ6) == (state2 & FLASH_DQ6))
+  			break;
+  		/* Timeout Flag? */
+! 		else if (state1 & FLASH_DQ5) {
+  			/* Retry data polling */
+  
+  			/* Data polling 1 */
+--- 205,216 ----
+  
+  		/* Flash command finished via polled data equal? */
+  		if ( (state1 & FLASH_DQ6) == (state2 & FLASH_DQ6) )
++ 		{
+  			break;
++ 		}
+  		/* Timeout Flag? */
+! 		else if (state1 & FLASH_DQ5)
+! 		{
+  			/* Retry data polling */
+  
+  			/* Data polling 1 */
+***************
+*** 164,170 ****
+--- 225,233 ----
+  
+  			/* Flash command finished via polled data equal? */
+  			if ( (state1 & FLASH_DQ6) != (state2 & FLASH_DQ6) )
++ 			{
+  				return ERROR_FLASH_OPERATION_FAILED;
++ 			}
+  
+  			/* finish anyway */
+  			break;
+***************
+*** 173,179 ****
+  		++ms;
+  
+  		/* Polling time exceeded? */
+! 		if (ms > timeout_ms) {
+  			LOG_ERROR("Polling data reading timed out!");
+  			return ERROR_FLASH_OPERATION_FAILED;
+  		}
+--- 236,243 ----
+  		++ms;
+  
+  		/* Polling time exceeded? */
+! 		if (ms > timeout_ms)
+! 		{
+  			LOG_ERROR("Polling data reading timed out!");
+  			return ERROR_FLASH_OPERATION_FAILED;
+  		}
+***************
+*** 198,210 ****
+  
+  	u32FlashType = (uint32_t) fm3_info->flashtype;
+  
+! 	if (u32FlashType == fm3_flash_type1) {
+  		u32FlashSeqAddress1 = 0x00001550;
+  		u32FlashSeqAddress2 = 0x00000AA8;
+! 	} else if (u32FlashType == fm3_flash_type2) {
+  		u32FlashSeqAddress1 = 0x00000AA8;
+  		u32FlashSeqAddress2 = 0x00000554;
+! 	} else {
+  		LOG_ERROR("Flash/Device type unknown!");
+  		return ERROR_FLASH_OPERATION_FAILED;
+  	}
+--- 262,279 ----
+  
+  	u32FlashType = (uint32_t) fm3_info->flashtype;
+  
+! 	if (u32FlashType == fm3_flash_type1)
+! 	{
+  		u32FlashSeqAddress1 = 0x00001550;
+  		u32FlashSeqAddress2 = 0x00000AA8;
+! 	}
+! 	else if (u32FlashType == fm3_flash_type2)
+! 	{
+  		u32FlashSeqAddress1 = 0x00000AA8;
+  		u32FlashSeqAddress2 = 0x00000554;
+! 	}
+! 	else
+! 	{
+  		LOG_ERROR("Flash/Device type unknown!");
+  		return ERROR_FLASH_OPERATION_FAILED;
+  	}
+***************
+*** 226,235 ****
+  	if (retval != ERROR_OK)
+  		return retval;
+  
+! 	for (sector = first ; sector <= last ; sector++) {
+  		uint32_t offset = bank->sectors[sector].offset;
+  
+! 		for (odd = 0; odd < 2 ; odd++) {
+  			if (odd)
+  				offset += 4;
+  
+--- 295,306 ----
+  	if (retval != ERROR_OK)
+  		return retval;
+  
+! 	for (sector = first ; sector <= last ; sector++)
+! 	{
+  		uint32_t offset = bank->sectors[sector].offset;
+  
+! 		for (odd = 0; odd < 2 ; odd++)
+! 		{
+  			if (odd)
+  				offset += 4;
+  
+***************
+*** 271,277 ****
+  	if (retval != ERROR_OK)
+  		return retval;
+  
+! 	retval = target_read_u32(target, 0x40000000, &u32DummyRead); /* dummy read of FASZR */
+  
+  	return retval;
+  }
+--- 342,349 ----
+  	if (retval != ERROR_OK)
+  		return retval;
+  
+! 	/* dummy read of FASZR */
+! 	retval = target_read_u32(target, 0x40000000, &u32DummyRead);
+  
+  	return retval;
+  }
+***************
+*** 293,305 ****
+  
+  	u32FlashType = (uint32_t) fm3_info->flashtype;
+  
+! 	if (u32FlashType == fm3_flash_type1) {
+  		u32FlashSeqAddress1 = 0x00001550;
+  		u32FlashSeqAddress2 = 0x00000AA8;
+! 	} else if (u32FlashType == fm3_flash_type2) {
+  		u32FlashSeqAddress1 = 0x00000AA8;
+  		u32FlashSeqAddress2 = 0x00000554;
+! 	} else {
+  		LOG_ERROR("Flash/Device type unknown!");
+  		return ERROR_FLASH_OPERATION_FAILED;
+  	}
+--- 365,382 ----
+  
+  	u32FlashType = (uint32_t) fm3_info->flashtype;
+  
+! 	if (u32FlashType == fm3_flash_type1)
+! 	{
+  		u32FlashSeqAddress1 = 0x00001550;
+  		u32FlashSeqAddress2 = 0x00000AA8;
+! 	}
+! 	else if (u32FlashType == fm3_flash_type2)
+! 	{
+  		u32FlashSeqAddress1 = 0x00000AA8;
+  		u32FlashSeqAddress2 = 0x00000554;
+! 	}
+! 	else
+! 	{
+  		LOG_ERROR("Flash/Device type unknown!");
+  		return ERROR_FLASH_OPERATION_FAILED;
+  	}
+***************
+*** 454,467 ****
+  	count = count / 2;		/* number bytes -> number halfwords */
+  
+  	/* check code alignment */
+! 	if (offset & 0x1) {
+  		LOG_WARNING("offset 0x%" PRIx32 " breaks required 2-byte alignment", offset);
+  		return ERROR_FLASH_DST_BREAKS_ALIGNMENT;
+  	}
+  
+  	/* allocate working area with flash programming code */
+  	if (target_alloc_working_area(target, sizeof(fm3_flash_write_code),
+! 			&fm3_info->write_algorithm) != ERROR_OK) {
+  		LOG_WARNING("no working area available, can't do block memory writes");
+  		return ERROR_TARGET_RESOURCE_NOT_AVAILABLE;
+  	}
+--- 531,546 ----
+  	count = count / 2;		/* number bytes -> number halfwords */
+  
+  	/* check code alignment */
+! 	if (offset & 0x1)
+! 	{
+  		LOG_WARNING("offset 0x%" PRIx32 " breaks required 2-byte alignment", offset);
+  		return ERROR_FLASH_DST_BREAKS_ALIGNMENT;
+  	}
+  
+  	/* allocate working area with flash programming code */
+  	if (target_alloc_working_area(target, sizeof(fm3_flash_write_code),
+! 			&fm3_info->write_algorithm) != ERROR_OK)
+! 	{
+  		LOG_WARNING("no working area available, can't do block memory writes");
+  		return ERROR_TARGET_RESOURCE_NOT_AVAILABLE;
+  	}
+***************
+*** 471,485 ****
+  	if (retval != ERROR_OK)
+  		return retval;
+  
+- 
+- 
+  	/* memory buffer */
+! 	while (target_alloc_working_area(target, buffer_size, &source) != ERROR_OK) {
+  		buffer_size /= 2;
+! 		if (buffer_size <= 256) {
+  			/* free working area, if write algorithm already allocated */
+  			if (fm3_info->write_algorithm)
+  				target_free_working_area(target, fm3_info->write_algorithm);
+  
+  			LOG_WARNING("No large enough working area available, can't do block memory writes");
+  			return ERROR_TARGET_RESOURCE_NOT_AVAILABLE;
+--- 550,566 ----
+  	if (retval != ERROR_OK)
+  		return retval;
+  
+  	/* memory buffer */
+! 	while (target_alloc_working_area(target, buffer_size, &source) != ERROR_OK)
+! 	{
+  		buffer_size /= 2;
+! 		if (buffer_size <= 256)
+! 		{
+  			/* free working area, if write algorithm already allocated */
+  			if (fm3_info->write_algorithm)
++ 			{
+  				target_free_working_area(target, fm3_info->write_algorithm);
++ 			}
+  
+  			LOG_WARNING("No large enough working area available, can't do block memory writes");
+  			return ERROR_TARGET_RESOURCE_NOT_AVAILABLE;
+***************
+*** 498,516 ****
+  
+  	/* write code buffer and use Flash programming code within fm3           */
+  	/* Set breakpoint to 0 with time-out of 1000 ms                          */
+! 	while (count > 0) {
+  		uint32_t thisrun_count = (count > (buffer_size / 2)) ? (buffer_size / 2) : count;
+  
+! 		retval = target_write_buffer(target, fm3_info->write_algorithm->address, 8,
+! 				fm3_flash_write_code);
+  		if (retval != ERROR_OK)
+  			break;
+  
+  		/* Patching 'local variable address' for different RAM addresses */
+! 		if (fm3_info->write_algorithm->address != 0x1FFF8008) {
+  			/* Algorithm: u32DummyRead: */
+  			retval = target_write_u32(target, (fm3_info->write_algorithm->address)
+! 				+ sizeof(fm3_flash_write_code) - 8, (fm3_info->write_algorithm->address) - 8);
+  			if (retval != ERROR_OK)
+  				break;
+  
+--- 579,600 ----
+  
+  	/* write code buffer and use Flash programming code within fm3 */
+  	/* Set breakpoint to 0 with time-out of 1000 ms */
+! 	while (count > 0)
+! 	{
+  		uint32_t thisrun_count = (count > (buffer_size / 2)) ? (buffer_size / 2) : count;
+  
+! 		retval = target_write_buffer(target, fm3_info->write_algorithm->address,
+! 				8, fm3_flash_write_code);
+  		if (retval != ERROR_OK)
+  			break;
+  
+  		/* Patching 'local variable address' for different RAM addresses */
+! 		if (fm3_info->write_algorithm->address != 0x1FFF8008)
+! 		{
+  			/* Algorithm: u32DummyRead: */
+  			retval = target_write_u32(target, (fm3_info->write_algorithm->address)
+! 					+ sizeof(fm3_flash_write_code) - 8,
+! 					(fm3_info->write_algorithm->address) - 8);
+  			if (retval != ERROR_OK)
+  				break;
+  
+***************
+*** 521,527 ****
+  				break;
+  		}
+  
+! 		retval = target_write_buffer(target, source->address, thisrun_count * 2, buffer);
+  		if (retval != ERROR_OK)
+  			break;
+  
+--- 605,612 ----
+  				break;
+  		}
+  
+! 		retval = target_write_buffer(target, source->address, thisrun_count * 2,
+! 				buffer);
+  		if (retval != ERROR_OK)
+  			break;
+  
+***************
+*** 533,547 ****
+  
+  		retval = target_run_algorithm(target, 0, NULL, 6, reg_params,
+  				fm3_info->write_algorithm->address, 0, 1000, &armv7m_info);
+! 		if (retval != ERROR_OK) {
+  			LOG_ERROR("Error executing fm3 Flash programming algorithm");
+  			retval = ERROR_FLASH_OPERATION_FAILED;
+  			break;
+  		}
+  
+! 		if (buf_get_u32(reg_params[5].value, 0, 32) != ERROR_OK) {
+! 			LOG_ERROR("Fujitsu MB9[A/B]FXXX: Flash programming ERROR (Timeout) -> Reg R3: %x",
+! 				buf_get_u32(reg_params[5].value, 0, 32));
+  			retval = ERROR_FLASH_OPERATION_FAILED;
+  			break;
+  		}
+--- 618,634 ----
+  
+  		retval = target_run_algorithm(target, 0, NULL, 6, reg_params,
+  				fm3_info->write_algorithm->address, 0, 1000, &armv7m_info);
+! 		if (retval != ERROR_OK)
+! 		{
+  			LOG_ERROR("Error executing fm3 Flash programming algorithm");
+  			retval = ERROR_FLASH_OPERATION_FAILED;
+  			break;
+  		}
+  
+! 		if (buf_get_u32(reg_params[5].value, 0, 32) != ERROR_OK)
+! 		{
+! 			LOG_ERROR("Fujitsu MB9[A/B]FXXX: Flash programming ERROR (Timeout) \
+! 					-> Reg R3: %x", buf_get_u32(reg_params[5].value, 0, 32));
+  			retval = ERROR_FLASH_OPERATION_FAILED;
+  			break;
+  		}
+***************
+*** 569,585 ****
+  	struct fm3_flash_bank *fm3_info = bank->driver_priv;
+  	uint16_t num_pages;
+  
+! 	if (bank->target->state != TARGET_HALTED) {
+  		LOG_ERROR("Target not halted");
+  		return ERROR_TARGET_NOT_HALTED;
+  	}
+  
+! 	num_pages = 6;				/* max number of Flash pages for malloc */
+  	fm3_info->probed = 0;
+  
+  	bank->sectors = malloc(sizeof(struct flash_sector) * num_pages);
+  	bank->base = 0x00000000;
+- 	num_pages = 2;				/* start with smallest Flash pages number */
+  	bank->size = 32 * 1024;		/* bytes */
+  
+  	bank->sectors[0].offset = 0;
+--- 656,688 ----
+  	struct fm3_flash_bank *fm3_info = bank->driver_priv;
+  	uint16_t num_pages;
+  
+! 	if (bank->target->state != TARGET_HALTED)
+! 	{
+  		LOG_ERROR("Target not halted");
+  		return ERROR_TARGET_NOT_HALTED;
+  	}
+  
+! /*
+!  -- page-- start -- blocksize - mpu - totalFlash --
+! 	page0 0x00000	16k
+! 	page1 0x04000	16k
+! 	page2 0x08000	96k		___ fxx3  128k Flash
+! 	page3 0x20000  128k		___ fxx4  256k Flash
+! 	page4 0x40000  128k		___ fxx5  384k Flash
+! 	page5 0x60000  128k		___ fxx6  512k Flash
+! -----------------------
+! 	page6 0x80000  128k
+! 	page7 0xa0000  128k		___ fxx7  256k Flash
+! 	page8 0xc0000  128k
+! 	page9 0xe0000  128k		___ fxx8  256k Flash
+! 	
+! 
+!  */
+! 	num_pages = 10;	//6;		/* max number of Flash pages for malloc */
+  	fm3_info->probed = 0;
+  
+  	bank->sectors = malloc(sizeof(struct flash_sector) * num_pages);
+  	bank->base = 0x00000000;
+  	bank->size = 32 * 1024;		/* bytes */
+  
+  	bank->sectors[0].offset = 0;
+***************
+*** 592,599 ****
+  	bank->sectors[1].is_erased = -1;
+  	bank->sectors[1].is_protected = -1;
+  
+! 	if ((fm3_info->variant == mb9bfxx1)
+! 	    || (fm3_info->variant == mb9afxx1)) {
+  		num_pages = 3;
+  		bank->size = 64 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+--- 695,702 ----
+  	bank->sectors[1].is_erased = -1;
+  	bank->sectors[1].is_protected = -1;
+  
+! 	if ((fm3_info->variant == mb9bfxx1) || (fm3_info->variant == mb9afxx1))
+! 	{
+  		num_pages = 3;
+  		bank->size = 64 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+***************
+*** 608,617 ****
+  		|| (fm3_info->variant == mb9bfxx4)
+  		|| (fm3_info->variant == mb9bfxx5)
+  		|| (fm3_info->variant == mb9bfxx6)
+  		|| (fm3_info->variant == mb9afxx2)
+  		|| (fm3_info->variant == mb9afxx4)
+  		|| (fm3_info->variant == mb9afxx5)
+! 		|| (fm3_info->variant == mb9afxx6)) {
+  		num_pages = 3;
+  		bank->size = 128 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+--- 711,725 ----
+  		|| (fm3_info->variant == mb9bfxx4)
+  		|| (fm3_info->variant == mb9bfxx5)
+  		|| (fm3_info->variant == mb9bfxx6)
++ 		|| (fm3_info->variant == mb9bfxx7)
++ 		|| (fm3_info->variant == mb9bfxx8)
+  		|| (fm3_info->variant == mb9afxx2)
+  		|| (fm3_info->variant == mb9afxx4)
+  		|| (fm3_info->variant == mb9afxx5)
+! 		|| (fm3_info->variant == mb9afxx6)
+! 		|| (fm3_info->variant == mb9afxx7)
+! 		|| (fm3_info->variant == mb9afxx8))
+! 	{
+  		num_pages = 3;
+  		bank->size = 128 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+***************
+*** 625,633 ****
+  	if ((fm3_info->variant == mb9bfxx4)
+  		|| (fm3_info->variant == mb9bfxx5)
+  		|| (fm3_info->variant == mb9bfxx6)
+  		|| (fm3_info->variant == mb9afxx4)
+  		|| (fm3_info->variant == mb9afxx5)
+! 		|| (fm3_info->variant == mb9afxx6)) {
+  		num_pages = 4;
+  		bank->size = 256 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+--- 733,746 ----
+  	if (   (fm3_info->variant == mb9bfxx4)
+  		|| (fm3_info->variant == mb9bfxx5)
+  		|| (fm3_info->variant == mb9bfxx6)
++ 		|| (fm3_info->variant == mb9bfxx7)
++ 		|| (fm3_info->variant == mb9bfxx8)
+  		|| (fm3_info->variant == mb9afxx4)
+  		|| (fm3_info->variant == mb9afxx5)
+! 		|| (fm3_info->variant == mb9afxx6)
+! 		|| (fm3_info->variant == mb9afxx7)
+! 		|| (fm3_info->variant == mb9afxx8))
+! 	{
+  		num_pages = 4;
+  		bank->size = 256 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+***************
+*** 640,647 ****
+  
+  	if ((fm3_info->variant == mb9bfxx5)
+  		|| (fm3_info->variant == mb9bfxx6)
+  		|| (fm3_info->variant == mb9afxx5)
+! 		|| (fm3_info->variant == mb9afxx6)) {
+  		num_pages = 5;
+  		bank->size = 384 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+--- 753,765 ----
+  
+  	if (   (fm3_info->variant == mb9bfxx5)
+  		|| (fm3_info->variant == mb9bfxx6)
++ 		|| (fm3_info->variant == mb9bfxx7)
++ 		|| (fm3_info->variant == mb9bfxx8)
+  		|| (fm3_info->variant == mb9afxx5)
+! 		|| (fm3_info->variant == mb9afxx6)
+! 		|| (fm3_info->variant == mb9afxx7)
+! 		|| (fm3_info->variant == mb9afxx8))
+! 	{
+  		num_pages = 5;
+  		bank->size = 384 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+***************
+*** 653,659 ****
+  	}
+  
+  	if ((fm3_info->variant == mb9bfxx6)
+! 		|| (fm3_info->variant == mb9afxx6)) {
+  		num_pages = 6;
+  		bank->size = 512 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+--- 771,782 ----
+  	}
+  
+  	if (   (fm3_info->variant == mb9bfxx6)
+! 		|| (fm3_info->variant == mb9bfxx7)
+! 		|| (fm3_info->variant == mb9bfxx8)
+! 		|| (fm3_info->variant == mb9afxx6)
+! 		|| (fm3_info->variant == mb9afxx7)
+! 		|| (fm3_info->variant == mb9afxx8))
+! 	{
+  		num_pages = 6;
+  		bank->size = 512 * 1024; /* bytes */
+  		bank->num_sectors = num_pages;
+***************
+*** 664,669 ****
+--- 787,830 ----
+  		bank->sectors[5].is_protected = -1;
+  	}
+  
++ 	if (   (fm3_info->variant == mb9bfxx7)
++ 		|| (fm3_info->variant == mb9bfxx8)
++ 		|| (fm3_info->variant == mb9afxx7)
++ 		|| (fm3_info->variant == mb9afxx8))
++ 	{
++ 		num_pages = 8;
++ 		bank->size = 768 * 1024; /* bytes */
++ 		bank->num_sectors = num_pages;
++ 
++ 		bank->sectors[6].offset = 0x80000;
++ 		bank->sectors[6].size = 128 * 1024;
++ 		bank->sectors[6].is_erased = -1;
++ 		bank->sectors[6].is_protected = -1;
++ 
++ 		bank->sectors[7].offset = 0xa0000;
++ 		bank->sectors[7].size = 128 * 1024;
++ 		bank->sectors[7].is_erased = -1;
++ 		bank->sectors[7].is_protected = -1;
++ 	}
++ 
++ 	if (   (fm3_info->variant == mb9bfxx8)
++ 		|| (fm3_info->variant == mb9afxx8))
++ 	{
++ 		num_pages = 10;
++ 		bank->size = 1024 * 1024; /* bytes */
++ 		bank->num_sectors = num_pages;
++ 
++ 		bank->sectors[8].offset = 0xc0000;
++ 		bank->sectors[8].size = 128 * 1024;
++ 		bank->sectors[8].is_erased = -1;
++ 		bank->sectors[8].is_protected = -1;
++ 
++ 		bank->sectors[9].offset = 0xe0000;
++ 		bank->sectors[9].size = 128 * 1024;
++ 		bank->sectors[9].is_erased = -1;
++ 		bank->sectors[9].is_protected = -1;
++ 	}
++ 
+  	fm3_info->probed = 1;
+  
+  	return ERROR_OK;
+***************
+*** 677,715 ****
+  	return fm3_probe(bank);
+  }
+  
+! static int fm3_info(struct flash_bank *bank, char *buf, int buf_size)
+  {
+  	snprintf(buf, buf_size, "Fujitsu fm3 Device does not support Chip-ID (Type unknown)");
+  	return ERROR_OK;
+  }
+  
+- /* Chip erase */
+  static int fm3_chip_erase(struct flash_bank *bank)
+  {
+  	struct target *target = bank->target;
+! 	struct fm3_flash_bank *fm3_info2 = bank->driver_priv;
+  	int retval = ERROR_OK;
+  	uint32_t u32DummyRead;
+  	uint32_t u32FlashType;
+  	uint32_t u32FlashSeqAddress1;
+  	uint32_t u32FlashSeqAddress2;
+  
+! 	u32FlashType = (uint32_t) fm3_info2->flashtype;
+  
+! 	if (u32FlashType == fm3_flash_type1) {
+  		LOG_INFO("*** Erasing mb9bfxxx type");
+  		u32FlashSeqAddress1 = 0x00001550;
+  		u32FlashSeqAddress2 = 0x00000AA8;
+! 	} else if (u32FlashType == fm3_flash_type2) {
+  		LOG_INFO("*** Erasing mb9afxxx type");
+  		u32FlashSeqAddress1 = 0x00000AA8;
+  		u32FlashSeqAddress2 = 0x00000554;
+! 	} else {
+  		LOG_ERROR("Flash/Device type unknown!");
+  		return ERROR_FLASH_OPERATION_FAILED;
+  	}
+  
+! 	if (target->state != TARGET_HALTED) {
+  		LOG_ERROR("Target not halted");
+  		return ERROR_TARGET_NOT_HALTED;
+  	}
+--- 838,881 ----
+  	return fm3_probe(bank);
+  }
+  
+! static int fm3_info_cmd(struct flash_bank *bank, char *buf, int buf_size)
+  {
+  	snprintf(buf, buf_size, "Fujitsu fm3 Device does not support Chip-ID (Type unknown)");
+  	return ERROR_OK;
+  }
+  
+  static int fm3_chip_erase(struct flash_bank *bank)
+  {
+  	struct target *target = bank->target;
+! 	struct fm3_flash_bank *fm3_info = bank->driver_priv;
+  	int retval = ERROR_OK;
+  	uint32_t u32DummyRead;
+  	uint32_t u32FlashType;
+  	uint32_t u32FlashSeqAddress1;
+  	uint32_t u32FlashSeqAddress2;
+  
+! 	u32FlashType = (uint32_t) fm3_info->flashtype;
+  
+! 	if (u32FlashType == fm3_flash_type1)
+! 	{
+  		LOG_INFO("*** Erasing mb9bfxxx type");
+  		u32FlashSeqAddress1 = 0x00001550;
+  		u32FlashSeqAddress2 = 0x00000AA8;
+! 	}
+! 	else if (u32FlashType == fm3_flash_type2)
+! 	{
+  		LOG_INFO("*** Erasing mb9afxxx type");
+  		u32FlashSeqAddress1 = 0x00000AA8;
+  		u32FlashSeqAddress2 = 0x00000554;
+! 	}
+! 	else
+! 	{
+  		LOG_ERROR("Flash/Device type unknown!");
+  		return ERROR_FLASH_OPERATION_FAILED;
+  	}
+  
+! 	if (target->state != TARGET_HALTED)
+! 	{
+  		LOG_ERROR("Target not halted");
+  		return ERROR_TARGET_NOT_HALTED;
+  	}
+***************
+*** 763,769 ****
+  	if (retval != ERROR_OK)
+  		return retval;
+  
+! 	retval = target_read_u32(target, 0x40000000, &u32DummyRead); /* dummy read of FASZR */
+  
+  	return retval;
+  }
+--- 929,936 ----
+  	if (retval != ERROR_OK)
+  		return retval;
+  
+! 	/* dummy read of FASZR */
+! 	retval = target_read_u32(target, 0x40000000, &u32DummyRead);
+  
+  	return retval;
+  }
+***************
+*** 773,792 ****
+  	int i;
+  
+  	if (CMD_ARGC < 1)
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+  
+  	struct flash_bank *bank;
+  	int retval = CALL_COMMAND_HANDLER(flash_command_get_bank, 0, &bank);
+  	if (ERROR_OK != retval)
+  		return retval;
+  
+! 	if (fm3_chip_erase(bank) == ERROR_OK) {
+  		/* set all sectors as erased */
+  		for (i = 0; i < bank->num_sectors; i++)
+  			bank->sectors[i].is_erased = 1;
+  
+  		command_print(CMD_CTX, "fm3 chip erase complete");
+! 	} else {
+  		command_print(CMD_CTX, "fm3 chip erase failed");
+  	}
+  
+--- 940,964 ----
+  	int i;
+  
+  	if (CMD_ARGC < 1)
++ 	{
+  		return ERROR_COMMAND_SYNTAX_ERROR;
++ 	}
+  
+  	struct flash_bank *bank;
+  	int retval = CALL_COMMAND_HANDLER(flash_command_get_bank, 0, &bank);
+  	if (ERROR_OK != retval)
+  		return retval;
+  
+! 	if (fm3_chip_erase(bank) == ERROR_OK)
+! 	{
+  		/* set all sectors as erased */
+  		for (i = 0; i < bank->num_sectors; i++)
+  			bank->sectors[i].is_erased = 1;
+  
+  		command_print(CMD_CTX, "fm3 chip erase complete");
+! 	}
+! 	else
+! 	{
+  		command_print(CMD_CTX, "fm3 chip erase failed");
+  	}
+  
+***************
+*** 824,828 ****
+  	.probe = fm3_probe,
+  	.auto_probe = fm3_auto_probe,
+  	.erase_check = default_flash_mem_blank_check,
+! 	.info = fm3_info,
+  };
+--- 996,1000 ----
+  	.probe = fm3_probe,
+  	.auto_probe = fm3_auto_probe,
+  	.erase_check = default_flash_mem_blank_check,
+! 	.info = fm3_info_cmd,
+  };
+diff -c -w -r openocd-orig/src/jtag/adapter.c openocd/src/jtag/adapter.c
+*** openocd-orig/src/jtag/adapter.c	Tue Mar 20 15:08:18 2012
+--- openocd/src/jtag/adapter.c	Tue Mar 20 16:26:55 2012
+***************
+*** 27,33 ****
+   *   Free Software Foundation, Inc.,                                       *
+   *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+   ***************************************************************************/
+- 
+  #ifdef HAVE_CONFIG_H
+  #include "config.h"
+  #endif
+--- 27,32 ----
+***************
+*** 50,56 ****
+  extern struct jtag_interface *jtag_interface;
+  const char *jtag_only[] = { "jtag", NULL };
+  
+! static int jim_adapter_name(Jim_Interp *interp, int argc, Jim_Obj * const *argv)
+  {
+  	Jim_GetOptInfo goi;
+  	Jim_GetOpt_Setup(&goi, interp, argc-1, argv + 1);
+--- 49,56 ----
+  extern struct jtag_interface *jtag_interface;
+  const char *jtag_only[] = { "jtag", NULL };
+  
+! static int
+! jim_adapter_name(Jim_Interp *interp, int argc, Jim_Obj *const *argv)
+  {
+  	Jim_GetOptInfo goi;
+  	Jim_GetOpt_Setup(&goi, interp, argc-1, argv + 1);
+***************
+*** 67,72 ****
+--- 67,73 ----
+  	return JIM_OK;
+  }
+  
++ 
+  static int default_khz(int khz, int *jtag_speed)
+  {
+  	LOG_ERROR("Translation from khz to jtag_speed not implemented");
+***************
+*** 97,104 ****
+  	int retval;
+  
+  	retval = CALL_COMMAND_HANDLER(transport_list_parse, &transports);
+! 	if (retval != ERROR_OK)
+  		return retval;
+  
+  	retval = allow_transports(CMD_CTX, (const char **)transports);
+  
+--- 98,106 ----
+  	int retval;
+  
+  	retval = CALL_COMMAND_HANDLER(transport_list_parse, &transports);
+! 	if (retval != ERROR_OK) {
+  		return retval;
++ 	}
+  
+  	retval = allow_transports(CMD_CTX, (const char **)transports);
+  
+***************
+*** 110,122 ****
+  	return retval;
+  }
+  
+  COMMAND_HANDLER(handle_interface_list_command)
+  {
+  	if (strcmp(CMD_NAME, "interface_list") == 0 && CMD_ARGC > 0)
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+  
+  	command_print(CMD_CTX, "The following debug interfaces are available:");
+! 	for (unsigned i = 0; NULL != jtag_interfaces[i]; i++) {
+  		const char *name = jtag_interfaces[i]->name;
+  		command_print(CMD_CTX, "%u: %s", i + 1, name);
+  	}
+--- 112,129 ----
+  	return retval;
+  }
+  
++ void driver_load_dll(void);
++ 
+  COMMAND_HANDLER(handle_interface_list_command)
+  {
+  	if (strcmp(CMD_NAME, "interface_list") == 0 && CMD_ARGC > 0)
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+  
++ 	driver_load_dll();
++ 
+  	command_print(CMD_CTX, "The following debug interfaces are available:");
+! 	for (unsigned i = 0; NULL != jtag_interfaces[i]; i++)
+! 	{
+  		const char *name = jtag_interfaces[i]->name;
+  		command_print(CMD_CTX, "%u: %s", i + 1, name);
+  	}
+***************
+*** 129,135 ****
+  	int retval;
+  
+  	/* check whether the interface is already configured */
+! 	if (jtag_interface) {
+  		LOG_WARNING("Interface already configured, ignoring");
+  		return ERROR_OK;
+  	}
+--- 136,143 ----
+  	int retval;
+  
+  	/* check whether the interface is already configured */
+! 	if (jtag_interface)
+! 	{
+  		LOG_WARNING("Interface already configured, ignoring");
+  		return ERROR_OK;
+  	}
+***************
+*** 138,148 ****
+  	if (CMD_ARGC != 1 || CMD_ARGV[0][0] == '\0')
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+  
+! 	for (unsigned i = 0; NULL != jtag_interfaces[i]; i++) {
+  		if (strcmp(CMD_ARGV[0], jtag_interfaces[i]->name) != 0)
+  			continue;
+  
+! 		if (NULL != jtag_interfaces[i]->commands) {
+  			retval = register_commands(CMD_CTX, NULL,
+  					jtag_interfaces[i]->commands);
+  			if (ERROR_OK != retval)
+--- 146,160 ----
+  	if (CMD_ARGC != 1 || CMD_ARGV[0][0] == '\0')
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+  
+! 	driver_load_dll();
+! 
+! 	for (unsigned i = 0; NULL != jtag_interfaces[i]; i++)
+! 	{
+  		if (strcmp(CMD_ARGV[0], jtag_interfaces[i]->name) != 0)
+  			continue;
+  
+! 		if (NULL != jtag_interfaces[i]->commands)
+! 		{
+  			retval = register_commands(CMD_CTX, NULL,
+  					jtag_interfaces[i]->commands);
+  			if (ERROR_OK != retval)
+***************
+*** 385,391 ****
+  {
+  	if (CMD_ARGC > 1)
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+! 	if (CMD_ARGC == 1) {
+  		unsigned delay;
+  		COMMAND_PARSE_NUMBER(uint, CMD_ARGV[0], delay);
+  
+--- 397,404 ----
+  {
+  	if (CMD_ARGC > 1)
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+! 	if (CMD_ARGC == 1)
+! 	{
+  		unsigned delay;
+  		COMMAND_PARSE_NUMBER(uint, CMD_ARGV[0], delay);
+  
+***************
+*** 399,405 ****
+  {
+  	if (CMD_ARGC > 1)
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+! 	if (CMD_ARGC == 1) {
+  		unsigned width;
+  		COMMAND_PARSE_NUMBER(uint, CMD_ARGV[0], width);
+  
+--- 412,419 ----
+  {
+  	if (CMD_ARGC > 1)
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+! 	if (CMD_ARGC == 1)
+! 	{
+  		unsigned width;
+  		COMMAND_PARSE_NUMBER(uint, CMD_ARGV[0], width);
+  
+***************
+*** 417,423 ****
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+  
+  	int retval = ERROR_OK;
+! 	if (CMD_ARGC == 1) {
+  		unsigned khz = 0;
+  		COMMAND_PARSE_NUMBER(uint, CMD_ARGV[0], khz);
+  
+--- 431,438 ----
+  		return ERROR_COMMAND_SYNTAX_ERROR;
+  
+  	int retval = ERROR_OK;
+! 	if (CMD_ARGC == 1)
+! 	{
+  		unsigned khz = 0;
+  		COMMAND_PARSE_NUMBER(uint, CMD_ARGV[0], khz);
+  
+diff -c -w -r openocd-orig/src/jtag/drivers/dummy.c openocd/src/jtag/drivers/dummy.c
+*** openocd-orig/src/jtag/drivers/dummy.c	Tue Mar 20 15:08:18 2012
+--- openocd/src/jtag/drivers/dummy.c	Tue Mar 20 16:26:55 2012
+***************
+*** 17,162 ****
+   *   Free Software Foundation, Inc.,                                       *
+   *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+   ***************************************************************************/
+- 
+  #ifdef HAVE_CONFIG_H
+  #include "config.h"
+  #endif
+  
+  #include <jtag/interface.h>
+  #include "bitbang.h"
+  #include "hello.h"
+  
+- /* my private tap controller state, which tracks state for calling code */
+- static tap_state_t dummy_state = TAP_RESET;
+  
+! static int dummy_clock;		/* edge detector */
+  
+! static int clock_count;		/* count clocks in any stable state, only stable states */
+  
+! static uint32_t dummy_data;
+  
+- static int dummy_read(void)
+- {
+- 	int data = 1 & dummy_data;
+- 	dummy_data = (dummy_data >> 1) | (1 << 31);
+- 	return data;
+- }
+  
+! static void dummy_write(int tck, int tms, int tdi)
+! {
+! 	/* TAP standard: "state transitions occur on rising edge of clock" */
+! 	if (tck != dummy_clock) {
+! 		if (tck) {
+! 			tap_state_t old_state = dummy_state;
+! 			dummy_state = tap_state_transition(old_state, tms);
+! 
+! 			if (old_state != dummy_state) {
+! 				if (clock_count) {
+! 					LOG_DEBUG("dummy_tap: %d stable clocks", clock_count);
+! 					clock_count = 0;
+! 				}
+  
+! 				LOG_DEBUG("dummy_tap: %s", tap_state_name(dummy_state));
+  
+! #if defined(DEBUG)
+! 				if (dummy_state == TAP_DRCAPTURE)
+! 					dummy_data = 0x01255043;
+! #endif
+! 			} else {
+! 				/* this is a stable state clock edge, no change of state here,
+! 				 * simply increment clock_count for subsequent logging
+  				 */
+! 				++clock_count;
+! 			}
+! 		}
+! 		dummy_clock = tck;
+! 	}
+! }
+! 
+! static void dummy_reset(int trst, int srst)
+  {
+! 	dummy_clock = 0;
+! 
+! 	if (trst || (srst && (jtag_get_reset_config() & RESET_SRST_PULLS_TRST)))
+! 		dummy_state = TAP_RESET;
+! 
+! 	LOG_DEBUG("reset to: %s", tap_state_name(dummy_state));
+! }
+! 
+! static void dummy_led(int on)
+! {
+! }
+! 
+! static struct bitbang_interface dummy_bitbang = {
+! 		.read = &dummy_read,
+! 		.write = &dummy_write,
+! 		.reset = &dummy_reset,
+! 		.blink = &dummy_led,
+  	};
+  
+! static int dummy_khz(int khz, int *jtag_speed)
+! {
+! 	if (khz == 0)
+! 		*jtag_speed = 0;
+! 	else
+! 		*jtag_speed = 64000/khz;
+! 	return ERROR_OK;
+! }
+  
+! static int dummy_speed_div(int speed, int *khz)
+  {
+! 	if (speed == 0)
+! 		*khz = 0;
+! 	else
+! 		*khz = 64000/speed;
+! 
+! 	return ERROR_OK;
+! }
+  
+! static int dummy_speed(int speed)
+! {
+! 	return ERROR_OK;
+  }
+  
+! static int dummy_init(void)
+! {
+! 	bitbang_interface = &dummy_bitbang;
+! 
+! 	return ERROR_OK;
+  }
+- 
+- static int dummy_quit(void)
+- {
+- 	return ERROR_OK;
+  }
+- 
+- static const struct command_registration dummy_command_handlers[] = {
+- 	{
+- 		.name = "dummy",
+- 		.mode = COMMAND_ANY,
+- 		.help = "dummy interface driver commands",
+- 
+- 		.chain = hello_command_handlers,
+- 	},
+- 	COMMAND_REGISTRATION_DONE,
+- };
+- 
+- /* The dummy driver is used to easily check the code path
+-  * where the target is unresponsive.
+-  */
+- struct jtag_interface dummy_interface = {
+- 		.name = "dummy",
+- 
+- 		.supported = DEBUG_CAP_TMS_SEQ,
+- 		.commands = dummy_command_handlers,
+- 		.transports = jtag_only,
+- 
+- 		.execute_queue = &bitbang_execute_queue,
+- 
+- 		.speed = &dummy_speed,
+- 		.khz = &dummy_khz,
+- 		.speed_div = &dummy_speed_div,
+- 
+- 		.init = &dummy_init,
+- 		.quit = &dummy_quit,
+- 	};
+--- 17,84 ----
+   *   Free Software Foundation, Inc.,                                       *
+   *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+   ***************************************************************************/
+  #ifdef HAVE_CONFIG_H
+  #include "config.h"
+  #endif
+  
++ #include "windows.h"
++ 
+  #include <jtag/interface.h>
+  #include "bitbang.h"
+  #include "hello.h"
+  
+  
+! HINSTANCE h_DLL = NULL;		// dll handle
+  
+! void driver_load_dll(void);
+  
+! extern	struct jtag_interface *jtag_interfaces[];
+! //struct jtag_command *jtag_command_queue;
+  
+  
+! typedef	void  *(__stdcall *_get_if_spec)(struct jtag_command **q);
+  
+! //
+! //	get_if_spec is a function pointer.
+! //
+! _get_if_spec  get_if_spec;
+  
+! /* The dummy driver is used to easily check the code path
+!  * where the target is unresponsive.
+   */
+! struct jtag_interface dummy_interface =
+  {
+! 	.name = "dummy",
+! 	.execute_queue = NULL,
+! 	.speed = NULL,
+! 	.commands = NULL,
+! 	.init = NULL,
+! 	.quit = NULL,
+! 	.khz = NULL,
+! 	.speed_div = NULL,
+! 	.power_dropout = NULL,
+! 	.srst_asserted = NULL,
+  };
+  
+! #define	DRIVER_DLL	"cdclink.dll"
+  
+! void driver_load_dll(void)
+  {
+! 	printf("driver_load_dll:\n");
+! 	if(	h_DLL != NULL ) return;
+  
+! 	h_DLL = LoadLibrary(DRIVER_DLL);
+! 	if (!h_DLL) {
+! 		fprintf(stderr, "Error at Load '%s'\n",DRIVER_DLL);
+! //		MessageBox(NULL, "Error at Load " DRIVER_DLL, "ERR", MB_OK);
+! 		return ;
+  	}	
+  
+! 	get_if_spec = (_get_if_spec )GetProcAddress(h_DLL, "get_if_spec");
+! 	if(get_if_spec!=NULL) {
+! 		void *p = get_if_spec(&jtag_command_queue);
+! 		jtag_interfaces[0] = (struct jtag_interface *) p;
+! 	}else{
+! 		fprintf(stderr, "Error at find entry point of '%s::get_if_spec()'\n",DRIVER_DLL);
+  	}
+  }
+diff -c -w -r openocd-orig/src/jtag/interfaces.c openocd/src/jtag/interfaces.c
+*** openocd-orig/src/jtag/interfaces.c	Tue Mar 20 15:08:18 2012
+--- openocd/src/jtag/interfaces.c	Tue Mar 20 16:26:55 2012
+***************
+*** 117,122 ****
+--- 117,127 ----
+   * or some number of standard driver interfaces, never both.
+   */
+  struct jtag_interface *jtag_interfaces[] = {
++ 
++ #if BUILD_DUMMY == 1
++ 		&dummy_interface,
++ #endif
++ 
+  #if BUILD_ZY1000 == 1
+  		&zy1000_interface,
+  #elif defined(BUILD_MINIDRIVER_DUMMY)
+***************
+*** 125,133 ****
+  #if BUILD_PARPORT == 1
+  		&parport_interface,
+  #endif
+- #if BUILD_DUMMY == 1
+- 		&dummy_interface,
+- #endif
+  #if BUILD_FT2232_FTD2XX == 1
+  		&ft2232_interface,
+  #endif
+--- 130,135 ----

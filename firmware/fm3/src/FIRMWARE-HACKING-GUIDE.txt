@@ -1,0 +1,365 @@
+FIRMWARE-HACKING-GUIDE.txt :
+
+/*************************************************************************
+	CDCLinkの概要
+ *************************************************************************
+
+-CDCLink ファームウェアは FM3基板を USB 仮想COMポート デバイスにします。
+
+-CDCLink ファームウェアの用途
+
+  - cdctool.exe を使用して、FM3 CPUのメモリー読み書き、ポート読み書き
+    逆アセンブルなどが出来ます。(簡易モニター)
+
+  - cdcbootFM3.exe を使用して、FM3 CPUにユーザープログラムを書き込んで
+    実行することが出来ます。（ブートローダー）
+    
+    CDCLinkファームウェア自体を番地を変えてコンパイルすることで、自身を
+    アプリケーションとして使用することも出来ます。
+
+    用意されているユーザー関数(user_cmd())に簡易なテストプログラムを書いて、
+    それをcdctool.exeからユーザーコマンド( ARM> user ) にて実行することで
+    簡単なポートアクセスのようなテストを実施することができます。
+    
+    また、CDCLinkファームウェアは、Flash ROM上の任意の開始番地にある
+    ユーザープログラムをブートする機能 ( ARM> boot address )を持っています。
+    
+    
+  - OpenOCD 経由で FM3基板を JTAGリンクケーブルとして使用することで、
+    別のARM基板のデバッグを行なうことができます。(JTAGデバッグ)
+
+
+
+
+/*************************************************************************
+	ARM 開発環境の入手
+ *************************************************************************
+
+開発環境は、ARM用のクロスgccを使用します。
+
+-ARM系の場合は、CodeSourcery G++ Lite 4.4.x を推奨します。(Windows/Linux)
+-Versionは4.4.xが実績がありますが、それより新しいものでも基本的はＯＫです。
+-オンラインの入手先に関しては、ReadMe.txt を参考にしてください。
+
+ビルドには 普通のGNU-Makeを使用します。これはMinGWのものを使用するか、ある
+いは、WinAVRなどに付属のものを使用してください。
+
+
+
+/*************************************************************************
+	簡易モニター機能について
+ *************************************************************************
+簡易モニターは cdctool.exe というWindows上のコマンドラインプログラムを
+DOS窓から起動することで使用できます。
+
+Command List
+ d  <ADDRESS1> <ADDRESS2>    Dump Memory(RAM)
+ e  <ADDRESS1> <DATA>        Edit Memory
+ f  <ADDRESS1> <ADDRESS2> <DATA> Fill Memory
+ l  <ADDRESS1> <ADDRESS2>    List (Disassemble) PGMEM
+ p ?                         Print PortName-List
+ p *                         Print All Port (dump format)
+ p <PortName>                Print PortAddress and data
+ p <PortName> <DATA>         Write Data to PortName
+ sleep <n>                   sleep <n> mSec
+ label <LABEL>               set loop label.
+ :<LABEL>                    set loop label.
+ loop  <LABEL> <CNT>         loop execution <CNT> times.
+ bench <CNT>                 HID Write Speed Test
+ boot [<address>]            Start user program
+ run  <address>              Run user program at <address>
+ user <arg>                  Run user defined function (usercmd.c)
+ poll <portName> [<CNT>]     continuous polling port
+ graph <portName>            Graphic display
+ q                           Quit to DOS
+ARM>
+
+一連のコマンドをスクリプトファイル（テキストファイル）にして、
+cdctoolの起動時に指定すると、それらコマンドを自動実行します。
+    D:> cdctool.exe -iscript.txt
+
+
+
+/*************************************************************************
+	ブートローダー機能について
+ *************************************************************************
+
+FM3用のCDCLinkファームウェアは、ブートローダーの機能を持っています。
+
+ 0000_0000 +--------------------------+
+           |  CDCLinkファームウェア   |  16kB
+ 0000_4000 +--------------------------+
+           |  ユーザーアプリケーション| 1MB-16kB
+           |                          |
+           |                          |
+           |                          |
+           |                          |
+ 0001_0000 +--------------------------+
+
+
+ cdcbootFM3.exe を使用して、USB経由でユーザーアプリケーションを書き込んで
+ 実行することが出来ます。
+    D:> cdcbootFM3.exe -r fm3-4000.hex
+
+
+ また、PORT P39をGND接地接続していて、かつ、4000番地にユーザーアプリケーション
+ が書き込み済みであれば、通電後そのままユーザーアプリケーションが起動します。
+ 
+ この機能は fm3/src/vector.c で制御できます。
+   #define	USER_BOOT_FUNCTION	Yes
+   #define	USER_BOOT_JUMPER	P39			// ジャンパーの指定.
+   #define	USER_BOOT_VECTOR	0x4000		// ユーザープログラムの指定.
+
+
+
+/*************************************************************************
+	ブートローダーの実行ファイル名について
+ *************************************************************************
+ FM3では cdctool/Makefileにて、 -DFM3を有効にしてビルドします。
+ そして、出来上がった実行ファイルcdcboot.exeをcdcbootFM3.exeという名称に
+ 置き換えて使用してください。
+ 
+ 他のSTM32マイコンで使用する場合は-DFM3を定義せずにビルドしてください。
+ 
+ これは、FM3ではFLASH書き込みのページマッピングが特殊なので条件コンパイル
+ で対応しているためです。
+
+
+
+
+/*************************************************************************
+	ブートシーケンスについて
+ *************************************************************************
+
+ vector.c がブート第一段です。 0x0000
+ crt0.c   がブート第二段です。 0x0200(BOOT) もしくは 0x4000(Application)
+
+ crt0.c は main() 関数を呼び出します。
+ main()関数が終了したら無限ループで停止します。
+
+ 4000 番地開始のアプリケーションとしてコンパイルされる場合は vector.c 
+ は使用されず、普通のSTM32ファームウェアのように、先頭に例外ベクタが配置されます。
+ 
+ 0000 番地開始のブートローダーとしてコンパイルされる場合は、二段の例外ベクター
+ が存在することになります。（二段目は0x1FFF_0000にコピーされて参照されます）
+
+ そして、 0x1FFF_0000番地に、RAM上の例外ベクター(256byte)が配置されますので、そこを
+ 破壊しないようにプログラムを書いてください。
+ 
+ なぜ、このようになっているかと言うと、FM3のNVIC（割り込みコントローラー）
+ には、例外ベクターのベースアドレスを変更する機能が無いために、ソフトウェア
+ で代替処理をおこなうようにしたからです。
+ 
+
+
+
+/*************************************************************************
+	stdio.h ( printf ) の使用について
+ *************************************************************************
+ user_cmd() 関数内で printfなどの関数を使用するとファームウェアサイズが
+ 16kBを超えます。
+ この場合は16kBのブートローダー( 0 ～ 0x3fff 番地)のサイズ制限を超えてしま
+ いますので、0番地スタートのファームウェアとしては使用しないようにしてください。
+
+
+
+
+/*************************************************************************
+	stdio.h ( printf ) の出力先について
+ *************************************************************************
+ printf()関数の出力結果は、以下の経路を通って cdctool.exeのDOS窓コンソール
+ へ表示されます。
+ 
+   stdlib (printf関数) --> syscalls.c (write関数) --> usercmd.c (_user_putc関数)
+ 
+ 注意点として、"\0" あるいは16進文字で0x00 を_user_putc()関数に渡しますと 
+ Windowsホスト側が、user_cmd()終了と判定してコマンド待ちに戻しますので、
+ アプリ側から 0x00 を直接 printf しないようにお願いします。
+
+
+
+
+/*************************************************************************
+	CDCデバイスからUSBカスタムデバイスへの変更方法
+ *************************************************************************
+
+src/usbfunc_demoapp_descriptor.h: USB-CDC デスクリプタ
+   #define	IS_CUSTOM_CLASS	(0)	// for TEST
+これを１にします。
+
+src/usbfunc_demoapp_config.h	: 
+   #define USB_VENDOR_ID    
+   #define USB_PRODUCT_ID   
+これらを適切なIDに書き換えます。
+
+他にもエンドポイントの仕様が変わる場合はそれに合わせてデスクリプタ
+やエンドポイントのハンドラを書き換えます。
+
+CDCデバイス固有のハンドラが不要であれば削除します。
+
+USBカスタムデバイスにした場合は、標準的な仮想COMとして扱う代わりに、libUSB
+やWinUSBライブラリを使用してデバイスを叩くようになります。
+
+
+/*************************************************************************
+	ソースファイル一覧:
+ *************************************************************************
+
+src/main.c				: メインルーチン
+src/mcu.h				: デバイス依存ヘッダー
+src/callback.c			: USB転送完了コールバックを捌く
+src/callback.h			: 
+src/crt0.c              : Ｃランタイムライブラリの起動部　スタートアップ
+src/crt0.h              : 
+src/debug.c             : デバッグヘルパー
+src/debug.h             : 
+src/monitor/board.c     : 時間待ち処理など
+src/monitor/fifo.c      : 汎用FIFO
+src/monitor/fifo.h      : 
+src/monitor/gpio.c      : GPIO制御 digitalWriteなど
+src/monitor/gpio.h      : 
+src/monitor/gpiodef.h   : 
+src/monitor/hidcmd.h    : monitorコマンド番号割り当て
+src/monitor/monit.c     : monitorメイン処理
+src/monitor/monit.h     : 
+src/monitor/picwrt.c    : AVR/PIC/JTAG処理
+src/monitor/picwrt.h    : 
+src/monitor/pindef.h	 		: JTAG用ピン割り当て表
+src/monitor/usbio.c             : USB-CDC入出力ユーティリティ
+src/monitor/usbio.h             : 
+src/monitor/usercmd.c           : ユーザーコマンド（テスト用）
+src/monitor/usi_pic18s.h        : AVR用書き込み処理
+src/monitor/utype.h             : 符号無しの型定義
+src/usbfunc_demoapp.c           : USB ハンドリングのメイン処理
+src/usbfunc_demoapp_config.h	: 
+src/usbfunc_demoapp_descriptor.h: USB-CDC デスクリプタ
+
+
+: FM3 commonライブラリ
+
+common/core_cm3.c		:
+common/core_cm3.h		:
+common/mb9bf506r.h		:
+common/system_mb9bf50x.c		:
+common/system_mb9bf50x.h		:
+common/system_mb9bf50x_usbfunc.c:
+
+: FM3 USBドライバー
+
+drivers/usbf/MB9B500.h
+drivers/usbf/common.h
+drivers/usbf/cpu_config.h
+drivers/usbf/cpu_define.h
+drivers/usbf/cpu_define_MB9B500.h
+drivers/usbf/cpu_map_MB9B500.h
+drivers/usbf/dbg_print.c
+drivers/usbf/dbg_print.h
+drivers/usbf/hw_support.h
+drivers/usbf/hw_support_type0.c
+drivers/usbf/joystick.c
+drivers/usbf/joystick.h
+drivers/usbf/joystick_config.h
+drivers/usbf/led.c
+drivers/usbf/led.h
+drivers/usbf/led_config.h
+drivers/usbf/mon.h
+drivers/usbf/timer.c
+drivers/usbf/timer.h
+drivers/usbf/timer_config.h
+drivers/usbf/typedef.h
+drivers/usbf/usbf.h
+drivers/usbf/usbf_api.c
+drivers/usbf/usbf_api.h
+drivers/usbf/usbf_cdc.h
+drivers/usbf/usbf_cdc_api.c
+drivers/usbf/usbf_cdc_api.h
+drivers/usbf/usbf_config.h
+drivers/usbf/usbf_core_control_transfer.c
+drivers/usbf/usbf_core_control_transfer.h
+drivers/usbf/usbf_core_data_transfer.c
+drivers/usbf/usbf_core_data_transfer.h
+drivers/usbf/usbf_core_descriptor_analyze.c
+drivers/usbf/usbf_core_descriptor_analyze.h
+drivers/usbf/usbf_core_event.c
+drivers/usbf/usbf_core_event.h
+drivers/usbf/usbf_core_stdrequest.c
+drivers/usbf/usbf_core_stdrequest.h
+drivers/usbf/usbf_hal_int.c
+drivers/usbf/usbf_hal_int.h
+drivers/usbf/usbf_hal_io.c
+drivers/usbf/usbf_hal_io.h
+drivers/usbf/usbf_msc.h
+drivers/usbf/usbf_msc_api.c
+drivers/usbf/usbf_msc_api.h
+drivers/usbf/usbf_msc_bot.c
+drivers/usbf/usbf_msc_bot.h
+drivers/usbf/usbf_msc_config.h
+drivers/usbf/usbf_msc_descriptor.h
+drivers/usbf/usbf_msc_scsi.c
+drivers/usbf/usbf_msc_scsi.h
+drivers/usbf/usbf_spec.h
+drivers/usbf/vector.c
+
+
+/*************************************************************************
+	改造の要点:
+ *************************************************************************
+
+  ・Code Sourcery G++ Lite (GNU make) でビルドが通せるようになっています。
+  ・開発環境は、Windows/Linuxの両方に対応しています。
+
+  ・ビルド方法は src/ ディレクトリにて、 make でＯＫです。
+
+
+USBを含む全体処理のメインは、以下のソースの以下の関数.
+src/usbfunc_demoapp.c : void usbfunc_demoapp_main(void);
+
+
+モニター側のメインループは、以下のソースの以下の関数.
+src/callback.c			: void USB_loop(void);
+
+#define	ECHOBACK_TEST	を 1にすると、USB-CDCエコーバックのテストファーム
+を作成できます。
+
+src/monitor/usercmd.c           : ユーザーコマンド（テスト用）
+void user_cmd(int arg) を書き換えることでデバイス側の簡単なテストを実行できます。
+実行方法は cdctool.exe を起動して
+ARM> user
+     ~~~~
+と入力します。
+簡易的なprintが使用できます。
+
+
+
+src/monitor/monit.c     : monitorメイン処理
+このファームウェアは、USB-CDCデバイスですが、60バイト固定長のパケットをホストＰＣ
+とやりとりすることによって簡易的なメモリーダンプやポート制御をホストＰＣ上のコマンド
+ラインツール(cdctool.exe)で実行するものです。
+
+
+src/monitor/picwrt.c    : AVR/PIC/JTAG処理
+monitorコマンドにJTAG操作のための追加コマンドを用意することで、JTAGリンクアダプター
+を実現しています。
+
+具体的には、以下の関数で実装されています。
+void jtag_command(int read_flag)   TMS/TDI/TCKの制御、TDOの読み取り機能.
+void jtag_control(int read_flag)   初期化、終了、nTRST,nSRSTピンの制御.
+
+
+src/monitor/gpio.c      : GPIO制御 digitalWriteなど
+Arduino風の関数  pinMode / digitalRead / digitalWrite を実装しています。
+pin番号は基本的に通番になっています。 (gpio.h)
+
+--------------------------------------------------------------------------------
+src/crt0.c              : Ｃランタイムライブラリの起動部　スタートアップ
+
+Ｃ言語のスタートアップモジュールは大抵アセンブラで書かれていてgcc環境の移植性
+がないことが多いのですが、今回はＣで書いてみました。 asm( ... ) ディレクティブ
+も使っていません。
+このスタートアップは最低限のことしかしません( .data のコピーと .bss のクリアのみ)
+
+チップ関係の初期化はmain()関数の最初に記述してください.
+ベクターテーブルの並びはCPUメーカーによって異なります。
+
+--------------------------------------------------------------------------------
+[EOF]

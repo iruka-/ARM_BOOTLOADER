@@ -1,0 +1,32 @@
+History of updates to CMSISv1p30_LPC11xx
+========================================
+
+23 February 2010
+----------------
+LPC11xx.h updated to new version (dated 23 February 2010),
+correcting value of __NVIC_PRIO_BITS from 3 to 2.
+
+23 March 2010
+-------------
+Optimisation level of release build of project changed from
+-O2 to -Os.
+
+12 July 2010
+------------
+New LPC11xx.h file from NXP. Main changes from previous header
+include
+- Addition of CAN_IRQn as interrupt 13
+- In LPC_SYSCON_TypeDef, RESERVED12 split to also provide 
+  MAINREGVOUT0CFG, MAINREGVOUT1CFG and RESERVED13, and 
+  RESERVED15 split to also provide VOUTCFGPROT and
+  RESERVED16.
+- Various changes to LPC_IOCON_TypeDef:
+    JTAG_TCK_PIO0_10 changed to SWCLK_PIO0_10
+    JTAG_TDI_PIO0_11 changed to R_PIO0_11
+    JTAG_TMS_PIO1_0 changed to R_PIO1_0
+    JTAG_TDO_PIO1_1 changed to R_PIO1_1
+    JTAG_nTRST_PIO1_2 changed to R_PIO1_2
+    ARM_SWDIO_PIO1_3 changed to SWDIO_PIO1_3   
+- Additional registers in LPC_WDT_TypeDef : RESERVED0, WARNINT
+  and WINDOW.
+- Added LPC_CAN_TypeDef, LPC_CAN_BASE and LPC_CAN.

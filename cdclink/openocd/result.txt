@@ -1,0 +1,190 @@
+#
+#	使用マシン    :H61マザー + Core-i3 
+#	JTAGアダプター:CQ-STARM
+#   ターゲット基板:STM8S-Discovery
+#
+
+E:\openocd>openocd.exe -f cdc_if.cfg -f stm32.cfg -f batch.cfg
+
+Open On-Chip Debugger 0.6.0-dev-snapshot (2011-11-20-11:32)
+Licensed under GNU GPL v2
+For bug reports, read
+        http://openocd.sourceforge.net/doc/doxygen/bugs.html
+driver_load_dll:
+Info : only one transport option; autoselect 'jtag'
+trst_only separate trst_push_pull
+1000 kHz
+adapter_nsrst_delay: 100
+jtag_ntrst_delay: 100
+cortex_m3 reset_config sysresetreq
+=*= cdclink_init(void)
+==== COM Port List====
+COM21:TxQue=0,RxQue=16384,Baud=0x66b70,BaudMax=0x10000000,Bits=0xc,SubType=6,Cap
+a=cd
+TARGET DEV_ID=a3 VER=1.1(Application) FLASH=800a36c,8020000
+Info : clock speed 1000 kHz
+Debug: 1 0 bitbang.c:438 bang_reset(): trst: 0, srst: 0
+Info : JTAG tap: stm32.cpu tap/device found: 0x3ba00477 (mfg: 0x23b, part: 0xba0
+0, ver: 0x3)
+Info : JTAG tap: stm32.bs tap/device found: 0x16410041 (mfg: 0x020, part: 0x6410
+, ver: 0x1)
+Info : stm32.cpu: hardware has 6 breakpoints, 4 watchpoints
+   TapName             Enabled  IdCode     Expected   IrLen IrCap IrMask
+-- ------------------- -------- ---------- ---------- ----- ----- ------
+ 0 stm32.cpu              Y     0x3ba00477 0x3ba00477     4 0x01  0x0f
+ 1 stm32.bs               Y     0x16410041 0x16410041     5 0x01  0x03
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+Debug: 2 0 bitbang.c:438 bang_reset(): trst: 1, srst: 0
+Debug: 3 0 bitbang.c:438 bang_reset(): trst: 0, srst: 0
+Info : JTAG tap: stm32.cpu tap/device found: 0x3ba00477 (mfg: 0x23b, part: 0xba0
+0, ver: 0x3)
+Info : JTAG tap: stm32.bs tap/device found: 0x16410041 (mfg: 0x020, part: 0x6410
+, ver: 0x1)
+target state: halted
+target halted due to debug-request, current mode: Thread
+xPSR: 0x01000000 pc: 0x080022a8 msp: 0x20005000
+auto erase enabled
+Info : device id = 0x20036410
+Info : flash size = 64kbytes
+Info : Padding image section 0 with 2128 bytes
+Info : Padding image section 1 with 176 bytes
+Info : Padding image section 2 with 496 bytes
+wrote 32768 bytes from file a.hex in 2.328125s (13.745 KiB/s)
+verified 29968 bytes in 0.906250s (32.293 KiB/s)
+dumped 16384 bytes in 1.578125s (10.139 KiB/s)
+16384 bytes written at address 0x20000000
+downloaded 16384 bytes in 0.500000s (32.000 KiB/s)
+shutdown command invoked
+=*= cdclink_quit(void)
+
+
+#
+#	使用マシン    :intel G 965 マザー + Core2 Quad
+#	JTAGアダプター:CQ-STARM
+#   ターゲット基板:STM8S-Discovery
+#
+
+E:\openocd>openocd.exe -f cdc_if.cfg -f stm32.cfg -f batch.cfg
+
+Open On-Chip Debugger 0.6.0-dev-snapshot (2011-11-20-11:32)
+Licensed under GNU GPL v2
+For bug reports, read
+        http://openocd.sourceforge.net/doc/doxygen/bugs.html
+driver_load_dll:
+Info : only one transport option; autoselect 'jtag'
+DEPRECATED! use 'adapter_khz' not 'jtag_khz'
+1000 kHz
+1000 kHz
+adapter_nsrst_delay: 100
+jtag_ntrst_delay: 100
+cortex_m3 reset_config sysresetreq
+=*= cdclink_init(void)
+==== COM Port List====
+COM15:TxQue=0,RxQue=16384,Baud=0x66b70,BaudMax=0x10000000,Bits=0xc,SubType=6,Cap
+a=cd
+TARGET DEV_ID=a3 VER=1.1(Application) FLASH=800a36c,8020000
+Info : clock speed 1000 kHz
+Debug: 1 0 bitbang.c:438 bang_reset(): trst: 0, srst: 0
+Info : JTAG tap: stm32.cpu tap/device found: 0x3ba00477 (mfg: 0x23b, part: 0xba0
+0, ver: 0x3)
+Info : JTAG tap: stm32.bs tap/device found: 0x16410041 (mfg: 0x020, part: 0x6410
+, ver: 0x1)
+Info : stm32.cpu: hardware has 6 breakpoints, 4 watchpoints
+   TapName             Enabled  IdCode     Expected   IrLen IrCap IrMask
+-- ------------------- -------- ---------- ---------- ----- ----- ------
+ 0 stm32.cpu              Y     0x3ba00477 0x3ba00477     4 0x01  0x0f
+ 1 stm32.bs               Y     0x16410041 0x16410041     5 0x01  0x03
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+Info : JTAG tap: stm32.cpu tap/device found: 0x3ba00477 (mfg: 0x23b, part: 0xba0
+0, ver: 0x3)
+Info : JTAG tap: stm32.bs tap/device found: 0x16410041 (mfg: 0x020, part: 0x6410
+, ver: 0x1)
+target state: halted
+target halted due to debug-request, current mode: Thread
+xPSR: 0x01000000 pc: 0x080022a8 msp: 0x20005000
+auto erase enabled
+Info : device id = 0x20036410
+Info : flash size = 64kbytes
+Info : Padding image section 0 with 2128 bytes
+Info : Padding image section 1 with 176 bytes
+Info : Padding image section 2 with 496 bytes
+wrote 32768 bytes from file a.hex in 2.312500s (13.838 KiB/s)
+verified 29968 bytes in 1.187500s (24.645 KiB/s)
+dumped 16384 bytes in 4.125000s (3.879 KiB/s)
+16384 bytes written at address 0x20000000
+downloaded 16384 bytes in 0.515625s (31.030 KiB/s)
+shutdown command invoked
+=*= cdclink_quit(void)
+
+#
+#	使用マシン    :H61マザー + Core-i3 
+#	JTAGアダプター:AE-FT2232 libftdi + libusb-win32
+#   ターゲット基板:STM8S-Discovery
+#
+
+E:\etc\Maple\cq-binary>openocd.exe -f hjlink.cfg -f stm32.cfg -f batch.cfg
+Open On-Chip Debugger 0.6.0-dev-snapshot (2011-11-20-11:32)
+Licensed under GNU GPL v2
+For bug reports, read
+        http://openocd.sourceforge.net/doc/doxygen/bugs.html
+driver_load_dll:
+Info : only one transport option; autoselect 'jtag'
+1000 kHz
+adapter_nsrst_delay: 100
+jtag_ntrst_delay: 100
+cortex_m3 reset_config sysresetreq
+Info : clock speed 1000 kHz
+Info : JTAG tap: stm32.cpu tap/device found: 0x3ba00477 (mfg: 0x23b, part: 0xba0
+0, ver: 0x3)
+Info : JTAG tap: stm32.bs tap/device found: 0x16410041 (mfg: 0x020, part: 0x6410
+, ver: 0x1)
+Info : stm32.cpu: hardware has 6 breakpoints, 4 watchpoints
+   TapName             Enabled  IdCode     Expected   IrLen IrCap IrMask
+-- ------------------- -------- ---------- ---------- ----- ----- ------
+ 0 stm32.cpu              Y     0x3ba00477 0x3ba00477     4 0x01  0x0f
+ 1 stm32.bs               Y     0x16410041 0x16410041     5 0x01  0x03
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+                                           0x06410041
+Info : JTAG tap: stm32.cpu tap/device found: 0x3ba00477 (mfg: 0x23b, part: 0xba0
+0, ver: 0x3)
+Info : JTAG tap: stm32.bs tap/device found: 0x16410041 (mfg: 0x020, part: 0x6410
+, ver: 0x1)
+target state: halted
+target halted due to debug-request, current mode: Thread
+xPSR: 0x01000000 pc: 0x080022a8 msp: 0x20005000
+auto erase enabled
+Info : device id = 0x20036410
+Info : flash size = 64kbytes
+Info : Padding image section 0 with 2128 bytes
+Info : Padding image section 1 with 176 bytes
+Info : Padding image section 2 with 496 bytes
+wrote 32768 bytes from file a.hex in 2.265625s (14.124 KiB/s)
+verified 29968 bytes in 1.328125s (22.035 KiB/s)
+dumped 16384 bytes in 0.437500s (36.571 KiB/s)
+16384 bytes written at address 0x20000000
+downloaded 16384 bytes in 0.234375s (68.267 KiB/s)
+shutdown command invoked
+
+E:\etc\Maple\cq-binary>rem
+
+E:\etc\Maple\cq-binary>

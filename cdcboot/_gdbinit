@@ -1,0 +1,13 @@
+#
+# .gdbinit
+#
+ handle SIGUSR1 nostop
+ handle SIGUSR1 noprint
+ file build/DISCOVERY.elf
+ target remote localhost:3333
+ break main
+ cont
+# 
+# x/10i 0x8000000
+# i reg
+
